@@ -14,22 +14,23 @@ ViT đặc biệt hữu ích trong các bài toán cần khai thác ngữ cảnh
 
 
 ### 2.1. Chia ảnh thành các patch
-- Đầu vào: ảnh kích thước \( H \times W \times C \).
-- Ảnh được chia thành các patch nhỏ kích thước \( P \times P \).
+- Đầu vào: ảnh kích thước $ H \times W \times C $.
+- Ảnh được chia thành các patch nhỏ kích thước $ P \times P $.
 - Mỗi patch được "flatten" thành vector 1 chiều.
 
-Ví dụ: Ảnh \(224 \times 224\), patch \(16 \times 16\) → có \(14 \times 14 = 196\) patch.
+Ví dụ: Ảnh $224 \times 224$, patch $16 \times 16$ → có $14 \times 14 = 196$ patch.
 
 ---
 
 ### 2.2. Embedding các patch
-Mỗi patch được chiếu tuyến tính (linear projection) thành vector có kích thước \(D\).  
+Mỗi patch được chiếu tuyến tính (linear projection) thành vector có kích thước $D$.  
 Điều này biến ảnh thành một chuỗi các vector, tương tự như chuỗi từ trong NLP.
 
 Công thức embedding:
-\[
+
+$$
 z_0^i = x^i E, \quad E \in \mathbb{R}^{(P^2C) \times D}
-\]
+$$
 
 ---
 
@@ -40,9 +41,10 @@ Một vector đặc biệt **[CLS]** được thêm vào đầu chuỗi, dùng �
 
 ### 2.4. Thêm thông tin vị trí (Positional Embedding)
 Transformer không tự biết patch nào ở đâu, do đó ta thêm **positional embedding**:  
-\[
+
+$$
 z_0 = [x_{cls}; x^1E; x^2E; ...; x^NE] + E_{pos}
-\]
+$$
 
 Điều này giúp mô hình nhận biết patch ở vị trí nào.
 
@@ -57,17 +59,21 @@ Mỗi lớp Encoder gồm:
 
 - Tính Attention giữa các patch với nhau.
 - Công thức Attention:
-\[
+- 
+$$
 Attention(Q, K, V) = softmax\left( \frac{QK^T}{\sqrt{d_k}} \right) V
-\]
+$$
 
 Trong đó:
-- \(Q = XW^Q, K = XW^K, V = XW^V\).
+-$
+Q = XW^Q, K = XW^K, V = XW^V .
+$
 
 Multi-head: 
-\[
+
+$$
 MultiHead(Q,K,V) = Concat(head_1, ..., head_h)W^O
-\]
+$$
 
 
  
@@ -79,9 +85,9 @@ MultiHead(Q,K,V) = Concat(head_1, ..., head_h)W^O
 #### b. Feed Forward Network (FFN)
 Mỗi patch vector đi qua một mạng MLP để học phi tuyến tính.
 
-\[
+$$
 FFN(x) = max(0, xW_1 + b_1)W_2 + b_2
-\]
+$$
 
 Các lớp này được lặp lại nhiều lần (ví dụ 12 lớp trong ViT-Base).
 
@@ -116,7 +122,7 @@ Trong bài toán dịch văn bản trong ảnh (Image-to-Text Translation), quy 
 
 ### Nhược điểm:
 - Cần lượng dữ liệu lớn để huấn luyện.  
-- Tính toán Self-Attention có độ phức tạp \(O(N^2)\) với số patch \(N\).
+- Tính toán Self-Attention có độ phức tạp $(O(N^2))$  với số patch $N$.
 
 ---
 
