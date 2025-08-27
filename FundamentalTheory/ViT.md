@@ -27,6 +27,7 @@ Mỗi patch được chiếu tuyến tính (linear projection) thành vector có
 Điều này biến ảnh thành một chuỗi các vector, tương tự như chuỗi từ trong NLP.
 
 Công thức embedding:
+
 $$
 z_0^i = x^i E, \quad E \in \mathbb{R}^{(P^2C) \times D}
 $$
@@ -40,6 +41,7 @@ Một vector đặc biệt **[CLS]** được thêm vào đầu chuỗi, dùng �
 
 ### 2.4. Thêm thông tin vị trí (Positional Embedding)
 Transformer không tự biết patch nào ở đâu, do đó ta thêm **positional embedding**:  
+
 $$
 z_0 = [x_{cls}; x^1E; x^2E; ...; x^NE] + E_{pos}
 $$
@@ -57,16 +59,18 @@ Mỗi lớp Encoder gồm:
 
 - Tính Attention giữa các patch với nhau.
 - Công thức Attention:
+- 
 $$
 Attention(Q, K, V) = softmax\left( \frac{QK^T}{\sqrt{d_k}} \right) V
 $$
 
 Trong đó:
-- $
+-$
 Q = XW^Q, K = XW^K, V = XW^V .
 $
 
 Multi-head: 
+
 $$
 MultiHead(Q,K,V) = Concat(head_1, ..., head_h)W^O
 $$
