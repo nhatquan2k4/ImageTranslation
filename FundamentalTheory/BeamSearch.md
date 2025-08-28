@@ -227,19 +227,3 @@ Trong mô hình dịch ảnh → văn bản tiếng Việt:
 - **KV-cache:** tăng tốc suy diễn
 
 ---
-
-## 8. Kết luận
-
-Beam Search là giải pháp decoding chuẩn trong Image-to-Text Translation.
-
-**Công thức nền tảng:**
-
-$$P(Y|X) = \prod_{t=1}^{T} P(y_t | y_{<t}, X)$$
-
-**Score chuẩn:**
-
-$$\text{score}(Y) = \frac{\log P(Y|X)}{\left(\frac{5 + |Y|}{6}\right)^\alpha}$$
-
-**Tham số tối ưu:** Beam size 4–8 cho cân bằng tối ưu giữa chất lượng và tốc độ.
-
----
