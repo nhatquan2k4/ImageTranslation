@@ -266,16 +266,20 @@ $$Y^* = [\text{"Ch@@"}, \text{"ào"}, \text{"▁m@@"}, \text{"ừng"}, \text{"�
 Áp dụng quy tắc của từng loại tokenizer để khôi phục từ gốc:
 
 - **BPE (hậu tố `@@`)**  
-  - Token có hậu tố `@@` ⇒ chưa kết thúc từ, nối với token sau.  
+  - Nếu token có hậu tố `@@` → nối trực tiếp với token sau mà không chèn khoảng trắng.
+  - Nếu token không có `@@` → kết thúc một từ, chèn khoảng trắng (trừ khi là dấu câu). 
   - Ví dụ: `"Ch@@" + "ào"` → `"Chào"`
 
 - **SentencePiece (tiền tố `▁`)**  
   - `▁` đại diện cho khoảng trắng trước từ.  
+
+  - Quy tắc: thay `▁` bằng " " rồi nối chuỗi.
   - Ví dụ: `"▁m@@", "ừng"` → `" mừng"`
 
 
 - **WordPiece (tiền tố `##`)**  
-  - Token bắt đầu bằng `##` ⇒ là phần tiếp nối của từ trước đó.  
+  - Token bắt đầu bằng `##` → nối vào cuối từ trước đó (không có khoảng trắng).
+  - Token không có `##` → bắt đầu một từ mới (có khoảng trắng trước đó). 
   - Ví dụ: `"Hà", "##Nội"` → `"HàNội"`
 
 
