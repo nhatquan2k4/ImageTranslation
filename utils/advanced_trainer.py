@@ -35,7 +35,7 @@ class AdvancedTrainer:
         self.max_grad_norm = float(max_grad_norm)
 
         # Fix deprecated GradScaler warning
-        if self.mixed_precision:
+        if self.mixed_precision and self.device.type == "cuda":
             self.scaler = GradScaler('cuda')
         else:
             self.scaler = None
@@ -93,7 +93,7 @@ class AdvancedTrainer:
                     continue
 
                 # Forward & loss
-                with autocast('cuda', enabled=self.mixed_precision):
+                with autocast(enabled=self.mixed_precision):
                     outputs = self.model(images, trg_input, trg_mask)  # (B, T-1, V)
                     if outputs.dim() != 3 or outputs.size(-1) == 0:
                         print("❌ Model output shape invalid.")
@@ -153,10 +153,10 @@ class AdvancedTrainer:
 
         # Nếu còn gradient (batch không chia hết)
         if (len(dataloader) % self.gradient_accumulation_steps) != 0:
-            if self.scaler.is_enabled():
+            if self.scaler and self.scaler.is_enabled():
                 self.scaler.unscale_(self.optimizer)
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
-            if self.scaler.is_enabled():
+            if self.scaler and self.scaler.is_enabled():
                 self.scaler.step(self.optimizer)
                 self.scaler.update()
             else:
@@ -183,7 +183,7 @@ class AdvancedTrainer:
             ckpt["vocab"] = vocab
         if config is not None:
             ckpt["config"] = config
-        if self.scaler.is_enabled():
+        if self.scaler and self.scaler.is_enabled():
             ckpt["scaler_state_dict"] = self.scaler.state_dict()
 
         torch.save(ckpt, filepath)
