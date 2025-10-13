@@ -16,8 +16,15 @@ def attention(q, k, v, mask=None, dropout=None):
     
     # Mask the future scores (to train model) and padding
     if (mask is not None):
-        mask = mask.unsqueeze(1)
-        scores = scores.masked_fill(mask==0, -1e9)
+        # Handle different mask shapes
+        if mask.dim() == 2:  # seq_len x seq_len
+            mask = mask.unsqueeze(0).unsqueeze(0)  # 1 x 1 x seq_len x seq_len
+        elif mask.dim() == 3:  # batch x seq_len x seq_len
+            mask = mask.unsqueeze(1)  # batch x 1 x seq_len x seq_len
+            
+        # Expand mask to match scores dimensions
+        mask = mask.expand_as(scores)
+        scores = scores.masked_fill(mask, -1e9)
     
     # Softmax will convert all -inf to 0
     scores = F.softmax(scores, dim = -1) # Softmax over last dimension

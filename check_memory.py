@@ -12,7 +12,7 @@ from modules.transformer import Transformer
 def check_system_resources():
     """Check system memory and GPU resources"""
     print("=" * 60)
-    print("🖥️  SYSTEM RESOURCE CHECK")
+    print("SYSTEM RESOURCE CHECK")
     print("=" * 60)
     
     # CPU and RAM
@@ -20,18 +20,18 @@ def check_system_resources():
     ram_total = psutil.virtual_memory().total / (1024**3)  # GB
     ram_available = psutil.virtual_memory().available / (1024**3)  # GB
     
-    print(f"💾 CPU Cores: {cpu_count}")
-    print(f"💾 RAM Total: {ram_total:.1f}GB")
-    print(f"💾 RAM Available: {ram_available:.1f}GB")
-    
+    print(f"CPU Cores: {cpu_count}")
+    print(f"RAM Total: {ram_total:.1f}GB")
+    print(f"RAM Available: {ram_available:.1f}GB")
+
     # GPU
     if torch.cuda.is_available():
         gpu_count = torch.cuda.device_count()
         for i in range(gpu_count):
             gpu_name = torch.cuda.get_device_name(i)
             gpu_memory = torch.cuda.get_device_properties(i).total_memory / (1024**3)
-            print(f"🎮 GPU {i}: {gpu_name}")
-            print(f"🎮 GPU {i} Memory: {gpu_memory:.1f}GB")
+            print(f"GPU {i}: {gpu_name}")
+            print(f"GPU {i} Memory: {gpu_memory:.1f}GB")
             
             # Test current memory usage
             torch.cuda.set_device(i)
@@ -39,9 +39,9 @@ def check_system_resources():
             cached = torch.cuda.memory_reserved(i) / (1024**3)
             free = gpu_memory - cached
             
-            print(f"🎮 GPU {i} Used: {allocated:.1f}GB, Cached: {cached:.1f}GB, Free: {free:.1f}GB")
+            print(f"GPU {i} Used: {allocated:.1f}GB, Cached: {cached:.1f}GB, Free: {free:.1f}GB")
     else:
-        print("⚠️  No CUDA GPU detected - will use CPU training (very slow)")
+        print("No CUDA GPU detected - will use CPU training (very slow)")
         
     return {
         'cpu_cores': cpu_count,
@@ -201,20 +201,20 @@ def main():
     if os.path.exists(config_path):
         with open(config_path, 'r') as f:
             current_config = json.load(f)
-        print(f"\n📋 Current config loaded from {config_path}")
+        print(f"\nCurrent config loaded from {config_path}")
     else:
-        print(f"\n⚠️  Config file not found: {config_path}")
+        print(f"\nConfig file not found: {config_path}")
         return
     
     # Estimate memory usage
     print("\n" + "=" * 60)
-    print("📊 MEMORY ESTIMATION")
+    print("MEMORY ESTIMATION")
     print("=" * 60)
     
     memory_estimate = estimate_model_memory(current_config)
-    print(f"🔢 Estimated parameters: {memory_estimate['parameters_millions']:.1f}M")
-    print(f"💾 Estimated memory usage: {memory_estimate['total_memory_gb']:.1f}GB")
-    
+    print(f"Estimated parameters: {memory_estimate['parameters_millions']:.1f}M")
+    print(f"Estimated memory usage: {memory_estimate['total_memory_gb']:.1f}GB")
+
     breakdown = memory_estimate['memory_breakdown']
     print(f"   - Parameters: {breakdown['parameters_mb']:.0f}MB")
     print(f"   - Gradients: {breakdown['gradients_mb']:.0f}MB") 
@@ -226,25 +226,25 @@ def main():
     estimated_usage = memory_estimate['total_memory_gb']
     
     print("\n" + "=" * 60)
-    print("💡 RECOMMENDATIONS")
+    print("RECOMMENDATIONS")
     print("=" * 60)
     
     if available_memory == 0:
-        print("⚠️  No GPU detected - training will be very slow on CPU")
-        print("💡 Consider using Google Colab, Kaggle, or cloud GPU services")
+        print("No GPU detected - training will be very slow on CPU")
+        print("Consider using Google Colab, Kaggle, or cloud GPU services")
         return
     
     usage_ratio = estimated_usage / available_memory
     
     if usage_ratio > 0.9:
-        print(f"❌ Current config requires {estimated_usage:.1f}GB but only {available_memory:.1f}GB available")
-        print("🔧 Recommending optimized config...")
+        print(f"Current config requires {estimated_usage:.1f}GB but only {available_memory:.1f}GB available")
+        print("Recommending optimized config...")
         
         # Get recommended config
         recommended = recommend_config(available_memory * 0.8)  # Use 80% of available memory
         
-        print(f"\n✅ Recommended: {recommended['description']}")
-        print("📝 Optimized parameters:")
+        print(f"\nRecommended: {recommended['description']}")
+        print("Optimized parameters:")
         for key, value in recommended.items():
             if key != 'description':
                 current_value = current_config.get(key, 'N/A')
@@ -252,7 +252,7 @@ def main():
                     print(f"   {key}: {current_value} → {value}")
         
         # Ask if user wants to apply recommendations
-        response = input("\n❓ Apply recommended config? (y/n): ").lower().strip()
+        response = input("\nApply recommended config? (y/n): ").lower().strip()
         if response in ['y', 'yes']:
             # Update config
             current_config.update(recommended)
@@ -263,24 +263,24 @@ def main():
             backup_path = config_path + ".backup"
             if os.path.exists(config_path):
                 os.rename(config_path, backup_path)
-                print(f"💾 Original config backed up to: {backup_path}")
+                print(f"Original config backed up to: {backup_path}")
             
             # Save new config
             with open(config_path, 'w') as f:
                 json.dump(current_config, f, indent=2)
-            print(f"✅ Optimized config saved to: {config_path}")
+            print(f"Optimized config saved to: {config_path}")
         else:
-            print("⏭️  Keeping current config (may cause out-of-memory errors)")
+            print("Keeping current config (may cause out-of-memory errors)")
             
     elif usage_ratio > 0.7:
-        print(f"⚠️  Current config uses {usage_ratio*100:.0f}% of available memory")
-        print("💡 Consider reducing batch_size if you encounter memory issues")
+        print(f"Current config uses {usage_ratio*100:.0f}% of available memory")
+        print("Consider reducing batch_size if you encounter memory issues")
         
     else:
-        print(f"✅ Current config looks good ({usage_ratio*100:.0f}% memory usage)")
-        print("💡 You might be able to increase batch_size for faster training")
+        print(f"Current config looks good ({usage_ratio*100:.0f}% memory usage)")
+        print("You might be able to increase batch_size for faster training")
     
-    print("\n🚀 Use these commands to start training:")
+    print("\nUse these commands to start training:")
     print(f"   Normal training: python train.py -d /path/to/data -m /path/to/model")
     print(f"   Incremental training: python incremental_train.py -d /path/to/data -m /path/to/model")
 

@@ -4,15 +4,15 @@ from PIL import Image
 import os
 
 class ImageProcessor:
-    def __init__(self, image_size=224):
+    def __init__(self, image_size=384):  # Increased size for better OCR
         self.image_size = image_size
         
-        # Transform cho training (có data augmentation)
+        # Transform cho training (OCR-optimized augmentation)
         self.train_transform = transforms.Compose([
-            transforms.Resize((image_size + 32, image_size + 32)),  # Resize to slightly larger
-            transforms.RandomCrop((image_size, image_size)),  # Random crop
-            transforms.RandomHorizontalFlip(p=0.1),  # Gentle flip for text images
-            transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.05),
+            transforms.Resize((image_size, image_size)),  # Fixed size for consistency
+            # More conservative augmentation for text preservation
+            transforms.ColorJitter(brightness=0.05, contrast=0.1, saturation=0.05),
+            # Remove horizontal flip - can damage text readability
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # ImageNet norms
         ])

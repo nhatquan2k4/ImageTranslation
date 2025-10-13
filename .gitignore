@@ -1,0 +1,48 @@
+# Dataset and Data Files
+i2t_dataset/
+
+# Model Files and Checkpoints  
+models/
+*.pt
+*.pth
+*.pkl
+*.ckpt
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# OS files
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+*~
+
+# Debug and test files
+check_memory.py
+debug_dataset.py
+test_project.py
+incremental_train.py
+run_training.py
+
+# Logs
+*.log
+logs/
+outputs/
+
+# Backup files
+*.bak
+*.backup
+*.orig

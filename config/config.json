@@ -1,10 +1,10 @@
 {
   "d_model": 512,
-  "batch_size": 4,
+  "batch_size": 8,
   "micro_batch_size": 2,
-  "gradient_accumulation_steps": 2,
+  "gradient_accumulation_steps": 4,
   "max_strlen": 128,
-  "epoch": 50,
+  "epoch": 100,
   "print_every": 25,
   "save_every": 5,
   "n_layers": 6,
@@ -16,10 +16,19 @@
   "vision_layers": 6,
   "vision_heads": 8,
   "patch_size": 16,
-  "warmup_steps": 4000,
+  "warmup_steps": 8000,
   "label_smoothing": 0.1,
   "mixed_precision": true,
+  "max_grad_norm": 1.0,
   "checkpoint_every_n_steps": 500,
-  "max_checkpoints_to_keep": 3,
-  "resume_from_checkpoint": null
+  "max_checkpoints_to_keep": 5,
+  "early_stopping_patience": 7,
+  "resume_from_checkpoint": null,
+  "_comments": {
+    "image_size": "Set to 224 to match pre-trained ViT-B/16 from ImageNet",
+    "gradient_accumulation_steps": "Increased for larger effective batch size",
+    "warmup_steps": "Doubled for more stable training with larger model",
+    "early_stopping_patience": "Added to prevent overfitting",
+    "max_grad_norm": "Added gradient clipping for stability"
+  }
 }

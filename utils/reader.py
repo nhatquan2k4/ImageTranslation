@@ -22,11 +22,29 @@ def create_data(json_path):
     not_empty = (df['image_path'].str.len() > 0) & (df['target_text'].str.len() > 0)
     df = df[not_empty]
     
-    # Convert relative paths to absolute paths if needed
-    data_dir = os.path.dirname(json_path)
-    df['image_path'] = df['image_path'].apply(
-        lambda x: x if os.path.isabs(x) else os.path.join(data_dir, x)
-    )
+    # Handle image paths - check if they exist as-is or need relative path conversion
+    def fix_image_path(image_path):
+        # If path exists as-is, use it
+        if os.path.exists(image_path):
+            return image_path
+        
+        # If it's already absolute but doesn't exist, try making it relative from project root
+        if os.path.isabs(image_path) or image_path.startswith('i2t_dataset'):
+            # Remove any leading path components and use as relative to current directory
+            if 'i2t_dataset' in image_path:
+                # Extract path from i2t_dataset onwards
+                parts = image_path.split(os.sep)
+                if 'i2t_dataset' in parts:
+                    idx = parts.index('i2t_dataset')
+                    relative_path = os.path.join(*parts[idx:])
+                    if os.path.exists(relative_path):
+                        return relative_path
+        
+        # Fallback: join with data_dir
+        data_dir = os.path.dirname(json_path)
+        return os.path.join(data_dir, os.path.basename(image_path))
+    
+    df['image_path'] = df['image_path'].apply(fix_image_path)
     
     return df
 

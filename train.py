@@ -12,8 +12,9 @@ from utils.step import step
 from utils.validation import validiate
 from utils.image_processor import ImageProcessor
 from utils.checkpoint_manager import CheckpointManager, MemoryOptimizedTrainer
+from utils.advanced_trainer import AdvancedTrainer, ImprovedScheduler
+from utils.validation_metrics import ValidationMetrics, EarlyStopping
 from modules.transformer import Transformer
-from torchtext.vocab import build_vocab_from_iterator
 
 
 def yield_tokens(data_iter, tokenizer):
@@ -26,9 +27,10 @@ def main(args):
     data_folder = args.data_folder
     model_folder = args.model_folder
     resume_from = args.resume_from_checkpoint
+    config_path = args.config
 
-    print("Load config")
-    config_file = open('config/config.json')
+    print(f"Load config from: {config_path}")
+    config_file = open(config_path)
     cfg = json.load(config_file)
     d_model = cfg.get('d_model', 512)
     batch_size = cfg['batch_size']
@@ -65,11 +67,26 @@ def main(args):
     trg_tokenizer = tokenizer('vi')
 
     print("Building vocab")
-    trg_vocab = build_vocab_from_iterator(
-        yield_tokens(df_train, trg_tokenizer),
-        specials=["<unk>", "<pad>", "<sos>", "<eos>"]
-    )
-    trg_vocab.set_default_index(trg_vocab["<unk>"])
+    # Custom vocab builder to avoid torchtext dependency issues
+    vocab_words = set()
+    for _, row in df_train.iterrows():
+        tokens = trg_tokenizer.tokenize(row["target_text"])
+        vocab_words.update(tokens)
+    
+    # Create vocab dictionary
+    specials = ["<unk>", "<pad>", "<sos>", "<eos>"]
+    trg_vocab = {}
+    
+    # Add special tokens first
+    for i, token in enumerate(specials):
+        trg_vocab[token] = i
+    
+    # Add regular tokens
+    for i, word in enumerate(sorted(vocab_words), start=len(specials)):
+        if word not in trg_vocab:
+            trg_vocab[word] = i
+    
+    print(f"Vocabulary size: {len(trg_vocab)}")
 
     print("Creating image processor")
     image_processor = ImageProcessor(image_size=image_size)
@@ -117,11 +134,36 @@ def main(args):
         smoothing=cfg.get('label_smoothing', 0.1)
     )
 
-    # Initialize checkpoint manager
+    # Initialize enhanced training components
     checkpoint_manager = CheckpointManager(model_folder, max_checkpoints)
     
-    # Initialize memory optimized trainer
-    memory_trainer = MemoryOptimizedTrainer(model, mixed_precision)
+    # Use improved scheduler
+    improved_scheduler = ImprovedScheduler(
+        torch.optim.Adam(model.parameters(), betas=(0.9, 0.98), eps=1e-9),
+        d_model=d_model,
+        warmup_steps=cfg.get('warmup_steps', 4000),
+        max_steps=n_epoch * len(train_dataset)
+    )
+    
+    # Initialize advanced trainer with optimizations
+    trainer = AdvancedTrainer(
+        model=model,
+        optimizer=improved_scheduler.optimizer,
+        scheduler=improved_scheduler,
+        criterion=criterion,
+        device=device,
+        gradient_accumulation_steps=gradient_accumulation_steps,
+        mixed_precision=mixed_precision,
+        max_grad_norm=cfg.get('max_grad_norm', 1.0)
+    )
+    
+    # Initialize validation metrics and early stopping
+    val_metrics = ValidationMetrics(trg_vocab, trg_tokenizer, device)
+    early_stopping = EarlyStopping(
+        patience=cfg.get('early_stopping_patience', 5),
+        min_delta=0.001,
+        mode='min'
+    )
 
     # Resume from checkpoint if specified
     start_epoch = 0
@@ -136,80 +178,80 @@ def main(args):
             
         if checkpoint_path and os.path.exists(checkpoint_path):
             start_epoch, start_step, last_loss = checkpoint_manager.load_checkpoint(
-                checkpoint_path, model, opt
+                checkpoint_path, model, improved_scheduler.optimizer
             )
             best_loss = last_loss
             print(f"📂 Resumed training from epoch {start_epoch}, step {start_step}")
         else:
             print(f"⚠️ Checkpoint not found: {resume_from}, starting from scratch")
 
-    print("Training begin")
+    print("🚀 Training begin with enhanced optimizations")
     global_step = start_step
     
     for epoch in range(start_epoch, n_epoch):
-        total_loss = 0
-        n_iter = 0
+        print(f"\n📚 Epoch {epoch+1}/{n_epoch}")
         
-        for i, batch in enumerate(train_dataset):
-            # Memory optimized training step
-            loss = memory_trainer.train_step(
-                model, opt, batch, criterion, 
-                trg_vocab["<pad>"], device, 
-                gradient_accumulation_steps
-            )
-            
-            n_iter += 1
-            total_loss += loss
-            global_step += 1
-            
-            # Print progress
-            if (i + 1) % print_every == 0:
-                avg_loss = total_loss / n_iter
-                print(f"epoch: {epoch+1:03d} - step: {global_step:06d} - iter: {i+1:04d} - loss: {avg_loss:.4f}")
-                total_loss = 0
-                n_iter = 0
-            
-            # Save checkpoint periodically
-            if global_step % checkpoint_every_n_steps == 0:
-                checkpoint_manager.save_checkpoint(
-                    model, opt, epoch, global_step, loss, trg_vocab, cfg
-                )
-                # Clear cache after checkpoint
-                torch.cuda.empty_cache() if torch.cuda.is_available() else None
-
-        # Validation at end of epoch
+        # Enhanced training step
+        epoch_loss = trainer.train_step(train_dataset, epoch)
+        global_step += len(train_dataset)
+        
+        # Comprehensive validation
         print(f"🔍 Running validation for epoch {epoch+1}...")
-        valid_loss = validiate(model, val_dataset, criterion, trg_vocab["<pad>"], device)
-        print(f'epoch: {epoch+1:03d} - valid loss: {valid_loss:.4f}')
+        validation_results = val_metrics.calculate_metrics(
+            model, val_dataset, max_samples=500  # Limit for speed
+        )
         
-        # Save epoch checkpoint
-        torch.save(model.state_dict(), os.path.join(model_folder, f'model.{epoch+1}.pt'))
+        val_loss = validation_results.get('loss', epoch_loss)  # Fallback to train loss
         
-        # Save best model
-        if best_loss is None or best_loss > valid_loss:
-            best_loss = valid_loss
+        print(f'📊 Epoch {epoch+1} Results:')
+        print(f'   Train Loss: {epoch_loss:.4f}')
+        print(f'   Val Accuracy: {validation_results["accuracy"]:.3f}')
+        print(f'   Val CER: {validation_results["cer"]:.3f}')
+        print(f'   Val WER: {validation_results["wer"]:.3f}')
+        print(f'   Val BLEU: {validation_results["bleu"]:.3f}')
+        
+        # Memory usage monitoring
+        if torch.cuda.is_available():
+            memory_stats = trainer.get_memory_usage()
+            print(f'   GPU Memory: {memory_stats["allocated"]:.1f}GB allocated, '
+                  f'{memory_stats["reserved"]:.1f}GB reserved')
+        
+        # Early stopping check
+        early_stop_result = early_stopping(validation_results["cer"])  # Use CER as metric
+        
+        if early_stop_result['improved']:
+            print(f"✅ New best CER: {early_stop_result['best_score']:.4f}")
+            # Save best model
             torch.save(model.state_dict(), os.path.join(model_folder, 'model_best.pt'))
             torch.save(trg_vocab, os.path.join(model_folder, 'trg_vocab.pth'))
-            # Copy config to model folder for inference
-            import shutil
-            shutil.copy('config/config.json', os.path.join(model_folder, 'config.json'))
-            print(f'✅ Best model saved with validation loss: {best_loss:.4f}')
         
-        # Save checkpoint every few epochs
+        # Save checkpoint
         if (epoch + 1) % save_every == 0:
-            checkpoint_manager.save_checkpoint(
-                model, opt, epoch + 1, global_step, valid_loss, trg_vocab, cfg
+            trainer.save_checkpoint(
+                checkpoint_manager, epoch, global_step, epoch_loss, trg_vocab, cfg
             )
+        
+        # Early stopping
+        if early_stop_result['should_stop']:
+            print(f"🛑 Early stopping triggered! No improvement for {early_stopping.patience} epochs")
+            break
+        
+
     
     print("🎉 Training completed!")
-    print(f"📊 Final best validation loss: {best_loss:.4f}")
+    print(f"📊 Best CER achieved: {early_stopping.best_score:.4f}")
     print(f"💾 Model saved to: {model_folder}")
+    
+    # Copy config to model folder for inference
+    import shutil
+    shutil.copy('config/config.json', os.path.join(model_folder, 'config.json'))
 
 
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument('-d', '--data_folder', type=str, required=True, help="Path to data folder")
     parser.add_argument('-m', '--model_folder', type=str, required=True, help="Path to model folder")
+    parser.add_argument('-c', '--config', type=str, default='config/config.json', help="Path to config file")
     parser.add_argument('-r', '--resume_from_checkpoint', type=str, default=None, 
                        help="Path to checkpoint file or 'latest' to resume from latest checkpoint")
     args = parser.parse_args()
