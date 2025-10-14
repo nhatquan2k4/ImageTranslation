@@ -1,12 +1,26 @@
 # Dataset and Data Files
 i2t_dataset/
+data/
+var/
+improved_data/
+*.json
+!config/*.json
+!**/sample*.json
 
 # Model Files and Checkpoints  
 models/
+checkpoints/
 *.pt
 *.pth
 *.pkl
 *.ckpt
+*.bin
+*.safetensors
+
+# Vocabulary and Tokenizer files
+*vocab*.pth
+*vocab*.pkl
+tokenizer/
 
 # Python Cache
 __pycache__/
@@ -36,13 +50,61 @@ debug_dataset.py
 test_project.py
 incremental_train.py
 run_training.py
+debug_dimensions.py
+check_data_leakage.py
+check_vocab_size.py
+analyze_loss.py
+create_improved_data.py
+validation_check.py
 
 # Logs
 *.log
 logs/
 outputs/
+runs/
+tensorboard/
+wandb/
+
+# Training artifacts
+training_logs/
+experiments/
+results/
+metrics/
 
 # Backup files
 *.bak
 *.backup
 *.orig
+
+# Image files (if too large)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+!sample_*.png
+!example_*.jpg
+
+# Large datasets and external files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+nmt-*/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb
+
+# Environment and Config
+.env
+.env.local
+config_local.json
+config_production.json
+
+# System and temporary files
+*.tmp
+*.temp
+temp/
+tmp/
