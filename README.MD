@@ -39,7 +39,7 @@ Phần này mô tả các khái niệm ML cơ bản và cách áp dụng chúng 
 Ví dụ patch embedding:
 $$x_{patch}^i = E\cdot\mathrm{vec}(I_{patch}^i) + p_i, \quad i=1..N$$
 
-![ResNet101 Architecture](FundamentalTheory\img\Resnet101.png)
+![ResNet101 Architecture](./FundamentalTheory/img/Resnet101.png)
 
 ### 2.3 Decoder (Text)
 - Transformer decoder: dùng self-attention (trong token đích) và cross-attention (tương tác với visual features) để sinh token theo kiểu autoregressive. Khi huấn luyện thường dùng teacher forcing; loss chính là Cross-Entropy trên phân phối token.
@@ -64,7 +64,7 @@ Dưới đây là mô tả ngắn và các công thức chính của những met
 	$$\mathrm{CIDEr}_n(c,S)=\dfrac{1}{m}\sum_{j=1}^m \dfrac{g_{c,n}\cdot g_{s_j,n}}{\|g_{c,n}\|\,\|g_{s_j,n}\|},\\quad \mathrm{CIDEr}(c,S)=\sum_{n=1}^4 w_n\,\mathrm{CIDEr}_n(c,S).$$
 
 - METEOR: kết hợp precision/recall với matching mở rộng (stemming, synonym) và penalty theo số khối (chunks):
-	$$F_{mean}=\dfrac{10PR}{R+9P},\\quad \mathrm{penalty}=\gamma\left(\dfrac{\#\mathrm{chunks}}{\#\mathrm{matches}}\right)^\beta,\\quad \mathrm{METEOR}=(1-\mathrm{penalty})\cdot F_{mean}.$$ 
+	$$F_{mean}=\dfrac{10PR}{R+9P},\quad \mathrm{penalty}=\gamma\left(\dfrac{\text{chunks}}{\text{matches}}\right)^\beta,\quad \mathrm{METEOR}=(1-\mathrm{penalty})\cdot F_{mean}.$$ 
 
 - ROUGE-L: dựa trên Longest Common Subsequence (LCS). Với $\mathrm{LCS}(c,r)$ là độ dài LCS giữa candidate $c$ và reference $r$:
 	$$R_{LCS}=\dfrac{\mathrm{LCS}(c,r)}{|r|},\\quad P_{LCS}=\dfrac{\mathrm{LCS}(c,r)}{|c|},\\quad F_{LCS}=\dfrac{(1+\beta^2)R_{LCS}P_{LCS}}{R_{LCS}+\beta^2P_{LCS}}.$$ 
@@ -142,14 +142,14 @@ Các kỹ thuật hỗ trợ: gradient clipping, label smoothing, dropout, sched
 
 
 ## 4. Kiến trúc mô hình ( Architecture )
-![Kiến trúc mô hình End-to-End CNN-Transformer với Attention](FundamentalTheory\img\Architecture.png)
+![Kiến trúc mô hình End-to-End CNN-Transformer với Attention](./FundamentalTheory/img/Architecture.png)
 
-![Quy trình huấn luyện và suy luận mô hình End-to-End](FundamentalTheory\img\Pipeline.png)
+![Quy trình huấn luyện và suy luận mô hình End-to-End](./FundamentalTheory/img/Pipeline.png)
 
 
 ## 5. So sánh kết quả với phương pháp truyền thống (OCR + MT)
 
-![So sánh kết quả giữa mô hình End-to-End và phương pháp truyền thống OCR + MT](FundamentalTheory\img\comparison_bar.png)
+![So sánh kết quả giữa mô hình End-to-End và phương pháp truyền thống OCR + MT](./FundamentalTheory/img/comparison_bar.png)
 ### Nhận xét về biểu đồ hiệu năng
 
 - **Tổng quan:** Mô hình End-to-End (ResNet101 + BARTpho) cho hiệu năng tốt hơn pipeline OCR + MT trên các metric hiển thị (BLEU_1, BLEU_4, METEOR, ROUGE_L, CIDEr).
